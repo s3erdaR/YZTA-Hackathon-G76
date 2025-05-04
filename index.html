@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learnify Kids - Okuma ve Yazma Öğrenme</title>
+    <style>
+        /* GENERAL STYLES */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', 'Helvetica Neue', sans-serif;
+        }
+        
+        body {
+            background-color: #f0f7ff;
+            color: #333;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        section {
+            padding: 30px 0;
+        }
+        
+        h1, h2, h3 {
+            color: #4e54c8;
+            margin-bottom: 20px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+            font-size: 18px;
+        }
+        
+        /* ANIMATIONS */
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(5deg); }
+            75% { transform: rotate(-5deg); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* THEMES & COLORS */
+        :root {
+            --primary: #4e54c8;
+            --secondary: #ff6b6b;
+            --accent: #feca57;
+            --light: #f0f7ff;
+            --dark: #333;
+            --success: #1dd1a1;
+            --warning: #ffbe76;
+            --info: #54a0ff;
+        }
+        
+        /* INTRO SCREEN / LANDING PAGE */
+        .intro-screen {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(135deg, #c2e9fb 0%, #a1c4fd 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .intro-screen::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('/api/placeholder/800/800');
+            background-size: cover;
+            opacity: 0.1;
+            z-index: 0;
+        }
+        
+        .app-logo {
+            font-size: 72px;
+            font-weight: bold;
+            color: var(--primary);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .app-logo span {
+            color: var(--secondary);
+        }
+        
+        .tagline {
+            font-size: 24px;
+            color: var(--dark);
+            margin-bottom: 50px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .main-buttons {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 50px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 15px 30px;
+            font-size: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
+        .btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-writing {
+            background-color: var(--secondary);
+            color: white;
+        }
+        
+        .btn-reading {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn i {
+            margin-right: 10px;
+        }
+        
+        .floating-icon {
+            position: absolute;
+            animation: bounce 2s infinite ease-in-out;
+            z-index: 1;
+        }
+        
+        .star-1 {
+            top: 15%;
+            left: 15%;
+            font-size: 28px;
+            color: var(--accent);
+            animation-delay: 0.2s;
+        }
+        
+        .star-2 {
+            top: 25%;
+            right: 20%;
+            font-size: 36px;
+            color: var(--secondary);
+            animation-delay: 0.5s;
+        }
+        
+        .star-3 {
+            bottom: 20%;
+            left: 20%;
+            font-size: 32px;
+            color: var(--primary);
+            animation-delay: 0.8s;
+        }
+        
+        /* MASCOT GUIDE */
+        .mascot {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 150px;
+            height: 150px;
+            background-image: url('/api/placeholder/150/150');
+            background-size: contain;
+            background-repeat: no-repeat;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.3s ease;
+        }
+        
+        .mascot:hover {
+            transform: scale(1.1);
+        }
+        
+        .speech-bubble {
+            position: absolute;
+            top: -100px;
+            right: 0;
+            width: 250px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            font-size: 16px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .speech-bubble.active {
+            opacity: 1;
+        }
+        
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            right: 30px;
+            border-width: 15px 15px 0;
+            border-style: solid;
+            border-color: white transparent;
+        }
+        
+        /* GAMIFICATION */
+        .progress-container {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background-color: white;
+            border-radius: 50px;
+            padding: 10px 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 10;
+        }
+        
+        .stars {
+            color: var(--accent);
+            font-size: 20px;
+        }
+        
+        .progress-bar {
+            width: 150px;
+            height: 10px;
+            background-color: #eee;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background-color: var(--success);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        /* WRITING MODULE */
+        .module-container {
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-top: 50px;
+            animation: fadeIn 0.5s ease-in-out;
+            display: none;
+        }
+        
+        .module-title {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 32px;
+            color: var(--primary);
+        }
+        
+        .writing-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .sentence-display {
+            font-size: 24px;
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            text-align: center;
+            line-height: 1.6;
+        }
+        
+        .upload-section {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .upload-prompt {
+            font-size: 18px;
+            text-align: center;
+        }
+        
+        .file-upload {
+            display: none;
+        }
+        
+        .upload-button {
+            background-color: var(--primary);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .upload-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .upload-preview {
+            width: 80%;
+            max-width: 500px;
+            min-height: 300px;
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+            position: relative;
+        }
+        
+        .upload-preview p {
+            position: absolute;
+            z-index: 1;
+        }
+        
+        .upload-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 2;
+        }
+        
+        .upload-preview img.visible {
+            opacity: 1;
+        }
+        
+        .loading-indicator {
+            display: none;
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(78, 84, 200, 0.2);
+            border-radius: 50%;
+            border-top: 5px solid var(--primary);
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .feedback-section {
+            margin-top: 30px;
+            width: 100%;
+            display: none;
+        }
+        
+        .feedback-title {
+            font-size: 24px;
+            color: var(--primary);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .incorrect-letters {
+            background-color: #ffe9e9;
+            border-left: 4px solid var(--secondary);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .video-tutorial {
+            width: 100%;
+            height: 300px;
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .try-again-btn {
+            background-color: var(--success);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin: 0 auto;
+            display: block;
+        }
+        
+        .try-again-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* READING MODULE */
+        .reading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .word-display {
+            font-size: 48px;
+            font-weight: bold;
+            background-color: #f9f9f9;
+            padding: 30px 50px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            min-width: 300px;
+            text-align: center;
+        }
+        
+        .reading-controls {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .mic-btn {
+            background-color: var(--primary);
+            color: white;
+            padding: 15px;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .mic-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .mic-btn.recording {
+            background-color: var(--secondary);
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .hint-btn {
+            background-color: var(--accent);
+            color: var(--dark);
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .hint-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .word-hint {
+            width: 300px;
+            height: 200px;
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .word-hint img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        
+        .feedback-text {
+            font-size: 20px;
+            text-align: center;
+            margin-top: 20px;
+            font-weight: bold;
+            min-height: 30px;
+        }
+        
+        .feedback-text.correct {
+            color: var(--success);
+        }
+        
+        .feedback-text.incorrect {
+            color: var(--secondary);
+        }
+        
+        .next-word-btn {
+            background-color: var(--success);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .next-word-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* RESULT SCREEN */
+        .result-container {
+            text-align: center;
+            padding: 50px 0;
+        }
+        
+        .result-title {
+            font-size: 36px;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+        
+        .result-score {
+            font-size: 48px;
+            font-weight: bold;
+            color: var(--success);
+            margin-bottom: 30px;
+        }
+        
+        .result-feedback {
+            font-size: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .restart-btn {
+            background-color: var(--primary);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .restart-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* SOUND & VOICE FEEDBACK */
+        .sound-control {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+            transition: all 0.3s ease;
+        }
+        
+        .sound-control:hover {
+            transform: scale(1.1);
+        }
+        
+        /* HOME BUTTON */
+        .home-btn {
+            position: fixed;
+            top: 20px;
+            right: 80px;
+            background-color: white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+            transition: all 0.3s ease;
+            display: none;
+        }
+        
+        .home-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 768px) {
+            .app-logo {
+                font-size: 48px;
+            }
+            
+            .tagline {
+                font-size: 18px;
+            }
+            
+            .main-buttons {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .btn {
+                padding: 12px 24px;
+                font-size: 16px;
+            }
+            
+            .mascot {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .speech-bubble {
+                width: 200px;
+                font-size: 14px;
+            }
+            
+            .sentence-display {
+                font-size: 20px;
+            }
+            
+            .word-display {
+                font-size: 36px;
+                padding: 20px 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- INTRO SCREEN / LANDING PAGE -->
+    <section class="intro-screen" id="intro-screen">
+        <div class="app-logo">Learnify <span>Kids</span></div>
+        <div class="tagline">Okuma ve Yazmayı Eğlenerek Öğren!</div>
+        
+        <div class="main-buttons">
+            <button class="btn btn-writing" id="writing-btn">✏️ Yazma Alıştırması</button>
+            <button class="btn btn-reading" id="reading-btn">📚 Okuma Alıştırması</button>
+        </div>
+        
+        <div class="floating-icon star-1">⭐</div>
+        <div class="floating-icon star-2">🌟</div>
+        <div class="floating-icon star-3">✨</div>
+    </section>
+    
+    <!-- WRITING MODULE -->
+    <div class="container">
+        <div class="module-container" id="writing-module">
+            <h2 class="module-title">Yazma Alıştırması</h2>
+            
+            <div class="writing-container">
+                <div class="sentence-display" id="sentence-display">
+                    <!-- Sentences will be loaded dynamically from API -->
+                    Kedi ağaçta uyuyor. Çocuklar parkta oynuyor.
+                </div>
+                
+                <div class="upload-section">
+                    <p class="upload-prompt">Yukarıdaki cümleyi bir kağıda yazın ve fotoğrafını yükleyin:</p>
+                    <input type="file" id="file-upload" class="file-upload" accept="image/*">
+                    <label for="file-upload" class="upload-button">Fotoğraf Yükle</label>
+                    
+                    <div class="upload-preview" id="upload-preview">
+                        <p>Fotoğrafınız burada görünecek</p>
+                        <img id="preview-image" src="" alt="Yüklenen yazı">
+                        <div class="loading-indicator" id="loading-indicator"></div>
+                    </div>
+                </div>
+                
+                <div class="feedback-section" id="feedback-section">
+                    <h3 class="feedback-title">Yazı Değerlendirmen</h3>
+                    
+                    <div class="incorrect-letters" id="incorrect-letters">
+                        <!-- Will be populated with Gemini feedback -->
+                    </div>
+                    
+                    <div class="video-tutorial" id="video-tutorial">
+                        <!-- Will be populated with YouTube tutorial videos -->
+                        <p>Doğru yazım için örnek video burada gösterilecek</p>
+                    </div>
+                    
+                    <button class="try-again-btn" id="try-again-btn">Tekrar Dene</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- READING MODULE -->
+    <div class="container">
+        <div class="module-container" id="reading-module">
+            <h2 class="module-title">Okuma Alıştırması</h2>
+            
+            <div class="reading-container">
+                <div class="word-display" id="word-display">
+                    <!-- Words will be loaded dynamically from API -->
+                    Kedi
+                </div>
+                
+                <div class="reading-controls">
+                    <div class="mic-btn" id="mic-btn">🎤</div>
+                    <button class="hint-btn" id="hint-btn">İpucu Göster</button>
+                </div>
+                
+                <div class="word-hint" id="word-hint">
+                    <img src="/api/placeholder/250/150" alt="Kelime ipucu" id="hint-image">
+                </div>
+                
+                <div class="feedback-text" id="feedback-text"></div>
+                
+                <button class="next-word-btn" id="next-word-btn">Sonraki Kelime</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- RESULT SCREEN -->
+    <div class="container">
+        <div class="module-container" id="result-container">
+            <h2 class="result-title">Tebrikler!</h2>
+            <div class="result-score" id="result-score">85%</div>
+            <p class="result-feedback" id="result-feedback">Harika bir iş çıkardın! Biraz daha pratik yaparsan daha da iyi olacaksın.</p>
+            
+            <button class="restart-btn" id="restart-btn">Ana Sayfaya Dön</button>
+        </div>
+    </div>
+    
+    <!-- MASCOT GUIDE -->
+    <div class="mascot" id="mascot">
+        <div class="speech-bubble" id="speech-bubble">
+            Merhaba! Ben Learnify'ın maskotu Bilge. Sana yardımcı olmak için buradayım!
+        </div>
+    </div>
+    
+    <!-- GAMIFICATION -->
+    <div class="progress-container">
+        <div class="stars">⭐ 0</div>
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+        </div>
+    </div>
+    
+    <!-- SOUND CONTROL -->
+    <div class="sound-control" id="sound-control">🔊</div>
+    
+    <!-- HOME BUTTON -->
+    <div class="home-btn" id="home-btn">🏠</div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Global variables
+            let soundEnabled = true;
+            let totalStars = 0;
+            let totalWords = 0;
+            let correctWords = 0;
+        
+            const writingSentences = [
+                "Kedi ağaçta uyuyor.",
+                "Çocuklar parkta oynuyor.",
+                "Kuş gökyüzünde uçuyor.",
+                "Araba yolda gidiyor.",
+                "Balık suda yüzüyor."
+            ];
+        
+            const readingWords = [
+                { word: "Kedi", image: "/api/placeholder/250/150" },
+                { word: "Araba", image: "/api/placeholder/250/150" },
+                { word: "Elma", image: "/api/placeholder/250/150" },
+                { word: "Güneş", image: "/api/placeholder/250/150" },
+                { word: "Kitap", image: "/api/placeholder/250/150" }
+            ];
+        
+            let currentSentenceIndex = 0;
+            let currentWordIndex = 0;
+        
+            // DOM References
+            const introScreen = document.getElementById('intro-screen');
+            const writingModule = document.getElementById('writing-module');
+            const readingModule = document.getElementById('reading-module');
+            const resultContainer = document.getElementById('result-container');
+            const mascot = document.getElementById('mascot');
+            const speechBubble = document.getElementById('speech-bubble');
+            const homeBtn = document.getElementById('home-btn');
+            const soundControl = document.getElementById('sound-control');
+            const progressBar = document.getElementById('progress');
+            const starsDisplay = document.querySelector('.stars');
+        
+            // Writing module elements
+            const sentenceDisplay = document.getElementById('sentence-display');
+            const fileUpload = document.getElementById('file-upload');
+            const previewImage = document.getElementById('preview-image');
+            const uploadPreview = document.getElementById('upload-preview');
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const feedbackSection = document.getElementById('feedback-section');
+            const incorrectLetters = document.getElementById('incorrect-letters');
+            const tryAgainBtn = document.getElementById('try-again-btn');
+        
+            // Reading module elements
+            const wordDisplay = document.getElementById('word-display');
+            const micBtn = document.getElementById('mic-btn');
+            const hintBtn = document.getElementById('hint-btn');
+            const wordHint = document.getElementById('word-hint');
+            const hintImage = document.getElementById('hint-image');
+            const feedbackText = document.getElementById('feedback-text');
+            const nextWordBtn = document.getElementById('next-word-btn');
+        
+            // Result screen elements
+            const resultScore = document.getElementById('result-score');
+            const resultFeedback = document.getElementById('result-feedback');
+            const restartBtn = document.getElementById('restart-btn');
+        
+            // Navigation buttons
+            document.getElementById('writing-btn').addEventListener('click', function() {
+                showModule('writing-module');
+                showMascotMessage('Yazma alıştırmasına hoş geldin! Ekrandaki cümleyi kağıda yazıp fotoğrafını yükle.');
+            });
+        
+            document.getElementById('reading-btn').addEventListener('click', function() {
+                showModule('reading-module');
+                showMascotMessage('Okuma alıştırmasına hoş geldin! Ekrandaki kelimeyi yüksek sesle oku.');
+            });
+        
+            homeBtn.addEventListener('click', function() {
+                showModule('intro-screen');
+                showMascotMessage('Ana sayfaya hoş geldin! Ne yapmak istersin?');
+            });
+        
+            restartBtn.addEventListener('click', function() {
+                showModule('intro-screen');
+                showMascotMessage('Tebrikler! Harika bir iş çıkardın!');
+            });
+        
+            function showModule(moduleId) {
+                introScreen.style.display = 'none';
+                writingModule.style.display = 'none';
+                readingModule.style.display = 'none';
+                resultContainer.style.display = 'none';
+        
+                if (moduleId === 'intro-screen') {
+                    introScreen.style.display = 'flex';
+                    homeBtn.style.display = 'none';
+                } else {
+                    document.getElementById(moduleId).style.display = 'block';
+                    homeBtn.style.display = 'flex';
+                }
+        
+                if (moduleId === 'writing-module') {
+                    initWritingModule();
+                } else if (moduleId === 'reading-module') {
+                    initReadingModule();
+                }
+            }
+        
+            mascot.addEventListener('click', function() {
+                speechBubble.classList.toggle('active');
+                if (speechBubble.classList.contains('active')) {
+                    setTimeout(() => {
+                        speechBubble.classList.remove('active');
+                    }, 5000);
+                }
+            });
+        
+            function showMascotMessage(message) {
+                speechBubble.textContent = message;
+                speechBubble.classList.add('active');
+                setTimeout(() => {
+                    speechBubble.classList.remove('active');
+                }, 5000);
+            }
+        
+            soundControl.addEventListener('click', function() {
+                soundEnabled = !soundEnabled;
+                soundControl.textContent = soundEnabled ? '🔊' : '🔇';
+            });
+        
+            function updateProgress(value) {
+                progressBar.style.width = value + '%';
+                if (value >= 25 && totalStars < 1) awardStar();
+                else if (value >= 50 && totalStars < 2) awardStar();
+                else if (value >= 75 && totalStars < 3) awardStar();
+                else if (value >= 100 && totalStars < 4) awardStar();
+            }
+        
+            function awardStar() {
+                totalStars++;
+                starsDisplay.textContent = `⭐ ${totalStars}`;
+                showMascotMessage('Tebrikler! Bir yıldız kazandın!');
+            }
+        
+            function initWritingModule() {
+                feedbackSection.style.display = 'none';
+                previewImage.classList.remove('visible');
+                uploadPreview.querySelector('p').style.display = 'block';
+                loadingIndicator.style.display = 'none';
+        
+                currentSentenceIndex = Math.floor(Math.random() * writingSentences.length);
+                sentenceDisplay.textContent = writingSentences[currentSentenceIndex];
+            }
+        
+            fileUpload.addEventListener('change', function(e) {
+                if (e.target.files && e.target.files[0]) {
+                    const reader = new FileReader();
+                    loadingIndicator.style.display = 'block';
+                    uploadPreview.querySelector('p').style.display = 'none';
+        
+                    reader.onload = function(event) {
+                        previewImage.src = event.target.result;
+                        previewImage.classList.add('visible');
+                        setTimeout(() => {
+                            loadingIndicator.style.display = 'none';
+                            analyzeWriting();
+                        }, 2000);
+                    };
+                    reader.readAsDataURL(e.target.files[0]);
+                }
+            });
+        
+            function analyzeWriting() {
+                const randomLetters = ['a', 'e', 's'];
+                let feedbackHtml = "<p>Aşağıdaki harfleri geliştirmelisin:</p><ul>";
+                randomLetters.forEach(letter => {
+                    feedbackHtml += `<li>"${letter}" harfini geliştir.</li>`;
+                });
+                feedbackHtml += "</ul>";
+                incorrectLetters.innerHTML = feedbackHtml;
+                feedbackSection.style.display = 'block';
+                updateProgress(50);
+            }
+        
+            tryAgainBtn.addEventListener('click', initWritingModule);
+        
+            function initReadingModule() {
+                wordHint.style.display = 'none';
+                feedbackText.textContent = '';
+                nextWordBtn.style.display = 'none';
+                micBtn.classList.remove('recording');
+        
+                currentWordIndex = Math.floor(Math.random() * readingWords.length);
+                wordDisplay.textContent = readingWords[currentWordIndex].word;
+                hintImage.src = readingWords[currentWordIndex].image;
+                totalWords++;
+            }
+        
+            hintBtn.addEventListener('click', function() {
+                wordHint.style.display = 'flex';
+            });
+        
+            micBtn.addEventListener('click', function() {
+                if (micBtn.classList.contains('recording')) {
+                    micBtn.classList.remove('recording');
+                    simulateSpeechRecognition();
+                } else {
+                    micBtn.classList.add('recording');
+                    showMascotMessage('Şimdi kelimeyi yüksek sesle oku!');
+                }
+            });
+        
+            function simulateSpeechRecognition() {
+                const isCorrect = Math.random() > 0.2;
+                if (isCorrect) {
+                    feedbackText.textContent = 'Harika! Doğru okudun.';
+                    feedbackText.className = 'feedback-text correct';
+                    correctWords++;
+                } else {
+                    feedbackText.textContent = 'Tekrar dene.';
+                    feedbackText.className = 'feedback-text incorrect';
+                    wordHint.style.display = 'flex';
+                }
+                nextWordBtn.style.display = 'block';
+                const progress = Math.round((correctWords / totalWords) * 100);
+                updateProgress(progress);
+            }
+        
+            nextWordBtn.addEventListener('click', function() {
+                if (totalWords >= 5) showResults();
+                else initReadingModule();
+            });
+        
+            function showResults() {
+                const score = Math.round((correctWords / totalWords) * 100);
+                resultScore.textContent = score + '%';
+                resultFeedback.textContent = score >= 80 ? 'Harika! Çok iyisin!' :
+                                              score >= 60 ? 'İyi iş! Pratik yapmaya devam!' :
+                                                            'Daha fazla pratik yapmalısın.';
+                showModule('result-container');
+            }
+        
+            // Init app
+            showModule('intro-screen');
+            showMascotMessage("Merhaba! Ben Bilge. Learnify Kids'e hoş geldin! Okuma veya yazma alıştırması seçebilirsin.");
+        });
+        </script>
+        
