@@ -1,5 +1,8 @@
 import os
-from flask import Flask, request, render_template, jsonify, session
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from PIL import Image
 import io
 import google.generativeai as genai
@@ -9,11 +12,17 @@ import random
 import requests
 import base64
 from datetime import datetime
+from pydantic import BaseModel
+from typing import Optional, List
 
+# Debug: Çevre değişkenlerini kontrol et
+print("Loading environment variables...")
 load_dotenv()
+print("GOOGLE_API_KEY exists:", bool(os.getenv("GOOGLE_API_KEY")))
+print("PIXABAY_API_KEY exists:", bool(os.getenv("PIXABAY_API_KEY")))
 
-app = Flask(__name__)
-app.secret_key = os.urandom(24)  # Session için güvenli bir anahtar
+app = FastAPI()
+templates = Jinja2Templates(directory="templates")
 
 # Global kelime havuzu ve sayaç
 kelime_havuzu = []
@@ -21,6 +30,13 @@ kelime_sayaci = 0
 
 # Yüksek skorları saklamak için basit bir dosya sistemi
 HIGH_SCORES_FILE = "high_scores.json"
+
+class ScoreData(BaseModel):
+    score: int
+    name: Optional[str] = "Anonim"
+
+class ProgressData(BaseModel):
+    correct: bool
 
 def load_high_scores():
     try:
@@ -52,77 +68,88 @@ def save_high_score(score, name):
         print("Yüksek skor kaydedilirken hata:", str(e))
         return False
 
-@app.route("/get-high-scores", methods=["GET"])
-def get_high_scores():
-    try:
-        # Session'dan kullanıcının en yüksek skorunu al
-        high_score = session.get("high_score", 0)
-        return jsonify([{"score": high_score}])
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+@app.get("/", response_class=HTMLResponse)
+async def index(request: Request):
+    return templates.TemplateResponse("page2.html", {"request": request})
 
-@app.route("/save-score", methods=["POST"])
-def save_score():
-    try:
-        data = request.get_json()
-        score = data.get("score")
-        name = data.get("name", "Anonim")
-        
-        if score is None:
-            return jsonify({"error": "Skor gerekli"}), 400
-            
-        if save_high_score(score, name):
-            return jsonify({"success": True})
-        return jsonify({"error": "Skor kaydedilemedi"}), 500
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+@app.get("/reading", response_class=HTMLResponse)
+async def reading(request: Request):
+    return templates.TemplateResponse("reading.html", {"request": request})
 
-@app.route("/update-progress", methods=["POST"])
-def update_progress():
-    data = request.get_json()
-    correct = data.get('correct', False)
+@app.get("/writing", response_class=HTMLResponse)
+async def writing(request: Request):
+    return templates.TemplateResponse("writing.html", {"request": request})
+
+@app.get("/get-word")
+async def get_word():
+    global kelime_havuzu, kelime_sayaci
     
-    # Session'da yıldız yoksa başlat
-    if 'stars' not in session:
-        session['stars'] = 0
-        session['max_stars'] = 0
+    try:
+        if not kelime_havuzu:
+            print("Kelime havuzu oluşturuluyor...")
+            if not kelime_havuzunu_doldur():
+                raise HTTPException(status_code=500, detail="Kelime havuzu oluşturulamadı.")
+            kelime_sayaci = 0
+
+        kelime = kelime_havuzu[kelime_sayaci]
+        kelime_sayaci += 1
+        print(f"Sıradaki kelime ({kelime_sayaci}/{len(kelime_havuzu)}):", kelime)
+
+        if kelime_sayaci >= len(kelime_havuzu):
+            print("Tüm kelimeler kullanıldı, yeni kelime havuzu oluşturuluyor...")
+            if not kelime_havuzunu_doldur():
+                raise HTTPException(status_code=500, detail="Kelime havuzu oluşturulamadı.")
+            kelime_sayaci = 0
+
+        return {"kelime": kelime}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/save-score")
+async def save_score(data: ScoreData):
+    try:
+        if save_high_score(data.score, data.name):
+            return {"success": True}
+        raise HTTPException(status_code=500, detail="Skor kaydedilemedi")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/update-progress")
+async def update_progress(data: ProgressData):
+    # Session yerine FastAPI'nin state yönetimi kullanılmalı
+    # Bu örnek için basit bir in-memory çözüm gösteriyorum
+    current_stars = getattr(app.state, 'stars', 0)
+    max_stars = getattr(app.state, 'max_stars', 0)
     
-    # Mevcut yıldız sayısını al
-    current_stars = session.get('stars', 0)
-    max_stars = session.get('max_stars', 0)
-    
-    # Yıldız sayısını güncelle
-    if correct:
-        current_stars += 1   # Doğru cevap için 1 yıldız
-        # En yüksek yıldız sayısını güncelle
+    if data.correct:
+        current_stars += 1
         if current_stars > max_stars:
             max_stars = current_stars
-            session['max_stars'] = max_stars
+            app.state.max_stars = max_stars
     else:
-        current_stars = max(0, current_stars - 1)  # Yanlış cevap için 1 yıldız düşür
+        current_stars = max(0, current_stars - 1)
     
-    # Session'ı güncelle
-    session['stars'] = current_stars
+    app.state.stars = current_stars
     
-    return jsonify({
+    return {
         'stars': current_stars,
         'max_stars': max_stars
-    })
+    }
 
 @app.route("/reset-progress", methods=["POST"])
 def reset_progress():
     # Tüm skorları sıfırla
-    session['stars'] = 0
-    session['max_stars'] = 0
-    return jsonify({
+    app.state.stars = 0
+    app.state.max_stars = 0
+    return JSONResponse({
         'stars': 0,
         'max_stars': 0
     })
 
 @app.route("/get-max-stars", methods=["GET"])
 def get_max_stars():
-    max_stars = session.get('max_stars', 0)
-    return jsonify({
+    max_stars = getattr(app.state, 'max_stars', 0)
+    return JSONResponse({
         'max_stars': max_stars
     })
 
@@ -130,14 +157,14 @@ def get_max_stars():
 def new_game():
     global kelime_havuzu, kelime_sayaci
     # Yeni oyun için yıldızları sıfırla
-    max_stars = session.get('max_stars', 0)  # En yüksek yıldız sayısını koru
-    session['stars'] = 0  # Mevcut yıldızları sıfırla
+    max_stars = getattr(app.state, 'max_stars', 0)  # En yüksek yıldız sayısını koru
+    app.state.stars = 0  # Mevcut yıldızları sıfırla
     
     # Kelime havuzunu sıfırla
     kelime_havuzu = []
     kelime_sayaci = 0
     
-    return jsonify({
+    return JSONResponse({
         'stars': 0,
         'max_stars': max_stars
     })
@@ -207,59 +234,17 @@ UNSPLASH_ACCESS_KEY = os.getenv("UNSPLASH_ACCESS_KEY")
 # Pixabay API anahtarı
 PIXABAY_API_KEY = os.getenv("PIXABAY_API_KEY")
 
-@app.route("/")
-def index():
-    return render_template("page2.html")
-
-@app.route("/reading")
-def reading():
-    return render_template("reading.html")
-
-@app.route("/writing")
-def writing():
-    return render_template("writing.html")
-
-@app.route("/get-word", methods=["GET"])
-def get_word():
-    global kelime_havuzu, kelime_sayaci
-    
+@app.get("/get-word-image")
+async def get_word_image(word: str):
     try:
-        # Eğer kelime havuzu boşsa yeni kelimeler üret
-        if not kelime_havuzu:
-            print("Kelime havuzu oluşturuluyor...")
-            if not kelime_havuzunu_doldur():
-                return jsonify({"error": "Kelime havuzu oluşturulamadı."}), 500
-            kelime_sayaci = 0
-
-        # Sıradaki kelimeyi al
-        kelime = kelime_havuzu[kelime_sayaci]
-        kelime_sayaci += 1
-        print(f"Sıradaki kelime ({kelime_sayaci}/{len(kelime_havuzu)}):", kelime)
-
-        # Eğer tüm kelimeler kullanıldıysa yeni kelimeler üret
-        if kelime_sayaci >= len(kelime_havuzu):
-            print("Tüm kelimeler kullanıldı, yeni kelime havuzu oluşturuluyor...")
-            if not kelime_havuzunu_doldur():
-                return jsonify({"error": "Kelime havuzu oluşturulamadı."}), 500
-            kelime_sayaci = 0
-
-        return jsonify({"kelime": kelime})
-    except Exception as e:
-        print("Hata oluştu:", str(e))
-        return jsonify({"error": str(e)}), 500
-
-@app.route("/get-word-image", methods=["GET"])
-def get_word_image():
-    try:
-        word = request.args.get('word', '')
         if not word:
             print("Hata: Kelime parametresi eksik")
-            return jsonify({"error": "Kelime parametresi gerekli."}), 400
+            raise HTTPException(status_code=400, detail="Kelime parametresi gerekli.")
 
         # API anahtarı kontrolü
         if not PIXABAY_API_KEY:
             print("Hata: Pixabay API anahtarı bulunamadı")
-            return jsonify({"error": "API anahtarı yapılandırılmamış."}), 500
+            raise HTTPException(status_code=500, detail="API anahtarı yapılandırılmamış.")
 
         print("Çevrilecek kelime:", word)
 
@@ -282,7 +267,7 @@ def get_word_image():
             "q": search_term,
             "image_type": "photo",
             "safesearch": "true",
-            "per_page": 3  # Minimum geçerli değer
+            "per_page": 20  # Daha fazla resim seçeneği için sayıyı artırdık
         }
 
         print("Pixabay API'ye resim isteği gönderiliyor...")
@@ -297,8 +282,11 @@ def get_word_image():
             if response.status_code == 200:
                 data = response.json()
                 if data.get("totalHits", 0) > 0:
-                    image_url = data["hits"][0]["webformatURL"]
-                    print("Resim URL'i alındı:", image_url)
+                    # Rastgele bir resim seç
+                    hits = data["hits"]
+                    random_image = random.choice(hits)
+                    image_url = random_image["webformatURL"]
+                    print("Seçilen resim URL'i:", image_url)
                     
                     # Resmi indir ve base64'e çevir
                     print("Resim indiriliyor...")
@@ -306,13 +294,13 @@ def get_word_image():
                     if image_response.status_code == 200:
                         image_data = base64.b64encode(image_response.content).decode('utf-8')
                         print("Resim başarıyla indirildi ve base64'e çevrildi")
-                        return jsonify({
+                        return {
                             "image": image_data,
                             "attribution": {
                                 "name": "Pixabay",
                                 "link": "https://pixabay.com"
                             }
-                        })
+                        }
                     else:
                         print("Resim indirme hatası:", image_response.status_code)
                         print("Resim indirme yanıtı:", image_response.text)
@@ -327,30 +315,47 @@ def get_word_image():
                 if alt_response.status_code == 200:
                     data = alt_response.json()
                     if data.get("totalHits", 0) > 0:
-                        image_url = data["hits"][0]["webformatURL"]
+                        # Rastgele bir resim seç
+                        hits = data["hits"]
+                        random_image = random.choice(hits)
+                        image_url = random_image["webformatURL"]
                         image_response = requests.get(image_url, timeout=10)
                         if image_response.status_code == 200:
                             image_data = base64.b64encode(image_response.content).decode('utf-8')
-                            return jsonify({
+                            return {
                                 "image": image_data,
                                 "attribution": {
                                     "name": "Pixabay",
                                     "link": "https://pixabay.com"
                                 }
-                            })
+                            }
             else:
                 print("Pixabay API hatası:", response.status_code)
                 print("API yanıtı:", response.text)
         except requests.exceptions.RequestException as e:
             print("API isteği hatası:", str(e))
-            return jsonify({"error": "API isteği başarısız oldu."}), 500
+            raise HTTPException(status_code=500, detail="API isteği başarısız oldu.")
         
         print("Resim bulunamadı")
-        return jsonify({"error": "Resim bulunamadı."}), 404
+        raise HTTPException(status_code=404, detail="Resim bulunamadı.")
 
+    except HTTPException as he:
+        raise he
     except Exception as e:
         print("Hata oluştu:", str(e))
-        return jsonify({"error": str(e)}), 500
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/test-keys")
+async def test_keys():
+    google_key = os.getenv("GOOGLE_API_KEY")
+    pixabay_key = os.getenv("PIXABAY_API_KEY")
+    
+    return {
+        "google_key_exists": bool(google_key),
+        "pixabay_key_exists": bool(pixabay_key),
+        "google_key_length": len(google_key) if google_key else 0,
+        "pixabay_key_length": len(pixabay_key) if pixabay_key else 0
+    }
 
 if __name__ == "__main__":
     app.run(debug=True)
