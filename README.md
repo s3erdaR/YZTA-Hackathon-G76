@@ -1,6 +1,6 @@
-Harfi Harfine ✍️📖
+Learnify Kids ✍️📖
 
-Harfi Harfine, çocukların yazma ve okuma becerilerini yapay zekâ destekli olarak geliştirmelerine yardımcı olmak amacıyla geliştirilmiş bir uygulamadır. Bu proje, Google Yapay Zeka ve Teknoloji Akademisi AI Hackathonu kapsamında oluşturulmuştur.
+Learnify Kids, çocukların yazma ve okuma becerilerini yapay zekâ destekli olarak geliştirmelerine yardımcı olmak amacıyla geliştirilmiş bir uygulamadır. Bu proje, Google Yapay Zeka ve Teknoloji Akademisi AI Hackathonu kapsamında oluşturulmuştur.
 
 🔍 Proje Amacı
 
