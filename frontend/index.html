@@ -18,14 +18,15 @@
             color: #333;
             overflow-x: hidden;
         }
-        
+
+
         .container {
             width: 100%;
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 20px;
         }
-        
+
         section {
             padding: 30px 0;
         }
@@ -40,7 +41,7 @@
             line-height: 1.6;
             font-size: 18px;
         }
-        
+
         /* ANIMATIONS */
         @keyframes bounce {
             0%, 100% { transform: translateY(0); }
@@ -986,19 +987,81 @@
                 }
             });
         
-            function analyzeWriting() {
-                const randomLetters = ['a', 'e', 's'];
-                let feedbackHtml = "<p>Aşağıdaki harfleri geliştirmelisin:</p><ul>";
-                randomLetters.forEach(letter => {
-                    feedbackHtml += `<li>"${letter}" harfini geliştir.</li>`;
-                });
-                feedbackHtml += "</ul>";
-                incorrectLetters.innerHTML = feedbackHtml;
-                feedbackSection.style.display = 'block';
-                updateProgress(50);
-            }
+
+function analyzeWriting() {
+    const originalText = document.getElementById('sentence-display').textContent;
+    const img = document.getElementById('preview-image');
+
+    const base64 = img.src.split(',')[1];
+    if (!img.src || !img.src.includes(',')) {
+        console.error("Görsel kaynağı uygun değil!");
+        return;
+    }
+
+    const byteCharacters = atob(base64);
+    const byteNumbers = Array.from(byteCharacters).map(char => char.charCodeAt(0));
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'image/png' });
+
+    const formData = new FormData();
+    formData.append('file', blob, 'auto_image.png');
+    formData.append('original', originalText);
+
+    fetch('http://127.0.0.1:8000/analyze', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            incorrectLetters.innerHTML = `<p>${data.error}</p>`;
+            feedbackSection.style.display = 'block';
+            return;
+        }
+
+        const wrongLetters = (data.wrong_letters || []).filter(letter => letter !== " ");
+        const videoTutorial = document.getElementById('video-tutorial');
+
+        if (wrongLetters.length === 0) {
+            incorrectLetters.innerHTML = "<p>Tebrikler! Yazın harika görünüyor 🎉</p>";
+            videoTutorial.innerHTML = "";
+            updateProgress(100);
+        } else {
+            let feedbackHtml = "<p>Aşağıdaki harfleri geliştirmelisin:</p><ul>";
+            wrongLetters.forEach(letter => {
+                feedbackHtml += `<li>"${letter}" harfi</li>`;
+            });
+            feedbackHtml += "</ul>";
+            incorrectLetters.innerHTML = feedbackHtml;
+
+            const videos = data.video_links || [];
+            let videosHtml = "";
+            videos.forEach(link => {
+                videosHtml += `<iframe width="300" height="200" src="${link.replace("watch?v=", "embed/")}" frameborder="0" allowfullscreen></iframe>`;
+            });
+            videoTutorial.innerHTML = videosHtml;
+
+        }
+
+        feedbackSection.style.display = 'block';
+    })
+    .catch(error => {
+        console.error("Hata:", error);
+        incorrectLetters.innerHTML = "<p>Analiz sırasında bir hata oluştu.</p>";
+        feedbackSection.style.display = 'block';
+    });
+}
         
-            tryAgainBtn.addEventListener('click', initWritingModule);
+            tryAgainBtn.addEventListener('click', function () {
+                initWritingModule();
+                fileUpload.value = "";
+                previewImage.src = "";
+                previewImage.classList.remove('visible');
+                uploadPreview.querySelector('p').style.display = 'block';
+                feedbackSection.style.display = 'none';
+                document.getElementById('video-tutorial').innerHTML = "";
+                incorrectLetters.innerHTML = "";
+});
         
             function initReadingModule() {
                 wordHint.style.display = 'none';
