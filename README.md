@@ -72,6 +72,8 @@ Başlıca kütüphaneler:
 
 streamlit – Web arayüzü
 
+pytesseract - Optik karakter tanıma
+
 google-cloud-vision – Görsel analiz
 
 speechrecognition – Sesli okuma analizi
@@ -79,6 +81,7 @@ speechrecognition – Sesli okuma analizi
 pytube – YouTube video entegrasyonu
 
 dotenv – API anahtarlarını ortamdan çekmek için
+
 
 API Anahtarları (.env)
 
